@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jarvis Voice Assistant</title>
+  <style>
+    body {
+      background: #000;
+      color: cyan;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 50px;
+    }
+
+    h1 {
+      text-shadow: 0 0 15px cyan, 0 0 30px cyan;
+    }
+
+    /* Arc Reactor Container */
+    .arc-reactor {
+      position: relative;
+      width: 250px;
+      height: 250px;
+      margin: 40px auto;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,255,255,0.9) 0%, rgba(0,255,255,0.1) 70%, transparent 100%);
+      box-shadow: 0 0 40px cyan, 0 0 80px cyan, 0 0 120px cyan;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Inner Core */
+    .arc-core {
+      width: 100px;
+      height: 100px;
+      background: cyan;
+      border-radius: 50%;
+      box-shadow: 0 0 20px cyan, 0 0 40px cyan, 0 0 80px cyan, 0 0 120px cyan;
+      animation: pulse 2s ease-in-out infinite alternate;
+    }
+
+    /* Inner Rotating Ring */
+    .arc-ring {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border: 3px solid cyan;
+      border-radius: 50%;
+      box-shadow: 0 0 15px cyan, 0 0 30px cyan;
+      animation: spin 6s linear infinite;
+    }
+
+    /* Outer Scanning Ring */
+    .scanner-ring {
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      border: 2px dashed cyan;
+      border-radius: 50%;
+      opacity: 0.7;
+      animation: spin-reverse 12s linear infinite;
+    }
+
+    /* Text Label */
+    .arc-text {
+      position: absolute;
+      bottom: -50px;
+      font-size: 24px;
+      font-weight: bold;
+      color: cyan;
+      text-shadow: 0 0 10px cyan, 0 0 20px cyan;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    /* Animations */
+    @keyframes pulse {
+      from { transform: scale(0.9); opacity: 0.8; }
+      to { transform: scale(1.1); opacity: 1; }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes spin-reverse {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+
+    @keyframes glow {
+      from { opacity: 0.6; }
+      to { opacity: 1; }
+    }
+
+    /* Voice Assistant Button */
+    button {
+      padding: 15px 30px;
+      background: cyan;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+      box-shadow: 0 0 20px cyan;
+    }
+    button:hover {
+      background: #00bbbb;
+    }
+
+    #output {
+      margin-top: 30px;
+      font-size: 20px;
+      color: #0ff;
+      text-shadow: 0 0 10px cyan;
+    }
+  </style>
+</head>
+<body>
+  <h1>J.A.R.V.I.S. Web Voice Assistant</h1>
+
+  <div class="arc-reactor">
+    <div class="scanner-ring"></div>
+    <div class="arc-ring"></div>
+    <div class="arc-core"></div>
+    <div class="arc-text">J.A.R.V.I.S.</div>
+  </div>
+
+  <button onclick="startListening()">🎤 Start Listening</button>
+  <div id="output">Waiting for command...</div>
+
+  <script>
+    function speak(text) {
+      const synth = window.speechSynthesis;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "en-US";
+      utter.pitch = 1.1;
+      utter.rate = 1;
+      synth.speak(utter);
+    }
+
+    function startListening() {
+      const output = document.getElementById("output");
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        output.innerText = "Speech Recognition not supported in this browser.";
+        speak("Sorry, your browser does not support voice recognition.");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.start();
+      output.innerText = "Listening... 🎤";
+      speak("I am listening, sir.");
+
+      recognition.onresult = (event) => {
+        const command = event.results[0][0].transcript.toLowerCase();
+        output.innerText = `You said: "${command}"`;
+
+        if (command.includes("google")) {
+          speak("Opening Google, sir.");
+          window.open("https://www.google.com", "_blank");
+        } else if (command.includes("youtube")) {
+          speak("Opening YouTube, sir.");
+          window.open("https://www.youtube.com", "_blank");
+        } else if (command.includes("time")) {
+          const now = new Date();
+          const time = now.toLocaleTimeString();
+          speak("The time is " + time);
+          output.innerText += ` → The time is ${time}`;
+        } else {
+          speak("Sorry, I didn't understand that.");
+          output.innerText += " → Sorry, I didn't understand.";
+        }
+      };
+
+      recognition.onerror = (event) => {
+        output.innerText = "Error: " + event.error;
+        speak("There was an error with voice recognition.");
+      };
+    }
+  </script>
+</body>
+</html>
