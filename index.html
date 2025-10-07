@@ -169,7 +169,31 @@
         } else if (command.includes("youtube")) {
           speak("Opening YouTube, sir.");
           window.open("https://www.youtube.com", "_blank");
-        } else if (command.includes("time")) {
+        } 
+        else if (command.includes("spotify")){
+            speak("opening spotify, sir");
+            window.open("https://open.spotify.com/", "_blank");
+        
+          }
+          else if (command.includes("whatsapp"))
+          {
+            speak("opening whatsapp, sir")
+            window.open("https://web.whatsapp.com/", "_blank");
+          }
+          else if (command.includes("flipkart"))
+          {
+            speak("opening flipkart, sir")
+            window.open(" https://www.flipkart.com/", "_blank");
+
+          }
+          else if (command.includes("play"))
+          {
+            const search = command.replace("play" , "").trim();
+            window,open("https://open.spotify.com/track/5SYcKZYmQnHBW1LGLOi8sH?si=7a8421a68bf74fc2 ", "_blank");
+           speak("playing " + search + " on spotify");
+      
+          }
+          else if (command.includes("time")) {
           const now = new Date();
           const time = now.toLocaleTimeString();
           speak("The time is " + time);
@@ -178,6 +202,7 @@
           speak("Sorry, I didn't understand that.");
           output.innerText += " → Sorry, I didn't understand.";
         }
+        
       };
 
       recognition.onerror = (event) => {
