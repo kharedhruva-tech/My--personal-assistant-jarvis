@@ -1,5 +1,4 @@
 import subprocess
-import psutil
 from tkinter import *
 from PIL import Image, ImageTk, ImageSequence
 import threading
@@ -12,10 +11,6 @@ import wikipedia
 import smtplib
 import requests
 import pygame
-import math
-import ast
-import operator as _op
-import re
 from pygame import mixer
 
 # Initialize pygame mixer safely
@@ -116,138 +111,6 @@ def play_favorite_song():
     else:
         speak("Favorite song not found.")
 
-# ---------------- SAFE CALCULATOR ---------------- #
-# Supported operators: + - * / % ** and parentheses, unary +/-
-_ALLOWED_BINOPS = {
-    ast.Add: _op.add,
-    ast.Sub: _op.sub,
-    ast.Mult: _op.mul,
-    ast.Div: _op.truediv,
-    ast.Pow: _op.pow,
-    ast.Mod: _op.mod,
-    ast.FloorDiv: _op.floordiv
-}
-
-def _eval_ast(node):
-    """Recursively evaluate an AST node containing only safe operations."""
-    if isinstance(node, ast.Expression):
-        return _eval_ast(node.body)
-    if isinstance(node, ast.Constant):  # Python 3.8+
-        if isinstance(node.value, (int, float)):
-            return node.value
-        else:
-            raise ValueError("Unsupported constant type")
-    if isinstance(node, ast.Num):  # older ast node
-        return node.n
-    if isinstance(node, ast.BinOp):
-        op_type = type(node.op)
-        if op_type not in _ALLOWED_BINOPS:
-            raise ValueError("Operator not allowed")
-        left = _eval_ast(node.left)
-        right = _eval_ast(node.right)
-        return _ALLOWED_BINOPS[op_type](left, right)
-    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
-        val = _eval_ast(node.operand)
-        return +val if isinstance(node.op, ast.UAdd) else -val
-    raise ValueError("Unsupported expression element")
-
-def safe_eval_expression(expr_str):
-    """Parse and evaluate a sanitized math expression using AST."""
-    try:
-        node = ast.parse(expr_str, mode='eval')
-        return _eval_ast(node)
-    except ZeroDivisionError:
-        raise
-    except Exception as e:
-        raise ValueError("Invalid expression") from e
-
-def calculate_expression(user_text):
-    """
-    Convert natural-language math into a sanitized expression and evaluate it.
-    Returns a numeric result or None if parsing failed.
-    """
-    if not user_text:
-        return None
-
-    s = user_text.lower()
-
-    # Remove common filler words
-    s = re.sub(r'\b(what is|whats|calculate|please|answer|equals|=)\b', ' ', s)
-
-    # Handle "square root of N" -> (N)**0.5
-    s = re.sub(r'square root of\s*([0-9]+(?:\.[0-9]+)?)', r'(\1)**0.5', s)
-
-    # Map multi-word phrases first
-    phrase_map = {
-        'divided by': '/',
-        'multiplied by': '*',
-        'to the power of': '**',
-        'times': '*',
-        'multiplied': '*',
-        'square root': '**0.5',  # fallback if used alone (rare)
-    }
-    for k, v in phrase_map.items():
-        s = s.replace(k, v)
-
-    # Map single word tokens
-    token_map = {
-        'plus': '+',
-        'minus': '-',
-        'x': '*',
-        'into': '*',
-        'multiply': '*',
-        'divide': '/',
-        'over': '/',
-        'modulo': '%',
-        'mod': '%',
-        '^': '**',
-        'power': '**'
-    }
-    # word boundaries to avoid partial replacements
-    for k, v in token_map.items():
-        s = re.sub(r'\b' + re.escape(k) + r'\b', v, s)
-
-    # Remove any characters except digits, operators, dot, parentheses and whitespace
-    s = re.sub(r'[^0-9\.\+\-\*\/\%\(\)\s\^]', '', s)
-
-    # Replace ^ with ** (if any)
-    s = s.replace('^', '**')
-
-    # Remove spaces to produce a compact expression
-    expr = re.sub(r'\s+', '', s)
-
-    # Quick sanity: must contain at least one digit
-    if not re.search(r'\d', expr):
-        return None
-
-    # Additional safety: avoid extremely long expressions
-    if len(expr) > 200:
-        return None
-
-    try:
-        result = safe_eval_expression(expr)
-        return result
-    except ZeroDivisionError:
-        return "DIV_BY_ZERO"
-    except Exception as e:
-        print("Calculator parse/eval error:", e, "expr:", expr)
-        return None
-
-# ---------------- CLOSE NOTEPAD ---------------- #
-def close_notepad():
-    """Closes all open Notepad processes."""
-    found = False
-    for proc in psutil.process_iter(['pid', 'name']):
-        try:
-            name = proc.info.get('name') or ''
-            if "notepad" in name.lower():
-                proc.kill()
-                found = True
-        except Exception:
-            # ignore processes we can't access
-            pass
-    return found
-
 # ---------------- ASSISTANT CORE ---------------- #
 def run_assistant():
     recognizer = sr.Recognizer()
@@ -275,14 +138,14 @@ def run_assistant():
             speak("Microphone not found. Please type your command.")
             return input("Type your command: ").lower()
 
-    speak("Nice meeting you again! I am Dhruva, your personal assistant. How can I help you today?")
+    speak("Nice meeting you again! I am dhruva , your personal assistant. How can I help you today?")
 
     while True:
         user_input = listen()
+
         if not user_input:
             continue
 
-        # basic commands (kept unchanged)
         if "hello" in user_input:
             speak("Hi there! How can I assist you?")
 
@@ -290,6 +153,7 @@ def run_assistant():
             speak("Sure, what would you like to listen to?")
             query = listen()
             webbrowser.open(f"https://www.youtube.com/results?search_query={query}")
+
 
         elif "stop music" in user_input:
             mixer.music.stop()
@@ -320,49 +184,13 @@ def run_assistant():
             city = listen()
             get_weather(city)
 
-        # ------------- OPEN NOTEPAD ------------- #
-        elif "open notepad" in user_input or "launch notepad" in user_input:
-            speak("Opening Notepad for you.")
-            try:
-                subprocess.Popen(["notepad.exe"])
-            except Exception as e:
-                print("Error opening Notepad:", e)
-                speak("Sorry, I couldn’t open Notepad.")
+        elif "exit" in user_input or "quit" in user_input:
+            speak("Goodbye! Before going, listen to your favorite song.")
+            play_favorite_song()
+            break
 
-        # ------------- CLOSE NOTEPAD ------------- #
-        elif "close notepad" in user_input or "exit notepad" in user_input:
-            if close_notepad():
-                speak("Notepad closed successfully.")
-            else:
-                speak("No Notepad window was open.")
-
-        # ------------- CALCULATOR FEATURE ------------- #
         else:
-            # try to detect math intent: either operator words or "number op number" pattern
-            calc_tokens = ['plus','minus','times','multiply','multiplied','divided','divide','/','*','+','-','^','mod','modulo','percent','square root']
-            if any(tok in user_input for tok in calc_tokens) or re.search(r'\d+\s*[-+*/^%]\s*\d+', user_input):
-                res = calculate_expression(user_input)
-                if res == "DIV_BY_ZERO":
-                    speak("Error: Division by zero.")
-                elif res is None:
-                    speak("Sorry, I couldn't understand that calculation. Try saying 'what is 2 plus 2' or '5 * 7'.")
-                else:
-                    # format result nicely
-                    if isinstance(res, float):
-                        if res.is_integer():
-                            formatted = int(res)
-                        else:
-                            formatted = round(res, 6)  # limit decimals
-                    else:
-                        formatted = res
-                    speak(f"The result is {formatted}.")
-                    print(f"🧮 Result: {formatted}")
-            elif "exit" in user_input or "quit" in user_input:
-                speak("Goodbye! Before going, listen to your favorite song.")
-                play_favorite_song()
-                break
-            else:
-                speak("I'm sorry, I didn't understand that. Can you repeat?")
+            speak("I'm sorry, I didn't understand that. Can you repeat?")
 
 # ---------------- THREADING ---------------- #
 if __name__ == "__main__":
